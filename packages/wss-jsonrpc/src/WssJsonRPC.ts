@@ -374,7 +374,8 @@ export namespace WssJsonRPC {
     }
 
     allPeerNodes() {
-      return [...this.peer_nodes.values()];
+      // NOTE: 不能用 [...this.peer_nodes.values()]
+      return Array.from(this.peer_nodes.values());
     }
 
     // request all peer node
@@ -400,7 +401,9 @@ export namespace WssJsonRPC {
 
     close() {
       this.server?.close();
-      this.allPeerNodes().forEach((node) => node.disconnect());
+      this.allPeerNodes().forEach((node) => {
+        node.disconnect();
+      });
       this.peer_nodes.clear();
     }
   }
