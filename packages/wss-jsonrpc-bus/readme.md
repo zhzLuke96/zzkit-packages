@@ -1,5 +1,7 @@
 # @zzkit/sev-bus
 
+WIP
+
 # License
 
-GPL-v3
+Apache-2.0

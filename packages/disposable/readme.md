@@ -1,5 +1,3 @@
-Here is a README.md for the @zzkit/disposable library:
-
 # @zzkit/disposable
 
 This library provides a convenient way to manage disposable resources in TypeScript. 

@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc-bus",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
@@ -25,7 +25,7 @@
   },
   "keywords": [],
   "author": "zhzluke96",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -41,5 +41,8 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.6.1",
     "typescript": "^5.1.6"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
