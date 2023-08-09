@@ -1,4 +1,4 @@
-import { CenterServer, ServiceNode } from "../src/main";
+import { CenterServer, ServiceNode } from "../dist/main";
 
 const main = async () => {
   const port = 8080;

@@ -58,9 +58,10 @@ export class CenterServer {
     // 如果没有节点就重试
     let count = 0;
     while (count < retry_times) {
-      const nodes = [...this.services[service_name]?.values()].filter(
-        (x) => x.is_alive
-      );
+      // NOTE: 不能用 [...xxx.values()] 打包会有问题
+      const nodes = Array.from(
+        this.services[service_name]?.values() || []
+      ).filter((x) => x.is_alive);
       if (nodes.length === 0) {
         count += 1;
         await new Promise((resolve) => setTimeout(resolve, 1000));
