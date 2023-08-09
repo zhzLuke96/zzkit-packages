@@ -10,8 +10,12 @@ import { CenterServer, ServiceNode } from "@zzkit/wss-jsonrpc-bus";
 const main = async () => {
   const port = 8080;
   const center = new CenterServer();
-  const sev1 = new ServiceNode(`ws://localhost:${port}`);
-  const sev2 = new ServiceNode(`ws://localhost:${port}`);
+  const sev1 = new ServiceNode({
+    center_url: `ws://localhost:${port}`,
+  });
+  const sev2 = new ServiceNode({
+    center_url: `ws://localhost:${port}`,
+  });
 
   center.listen({
     port,
@@ -48,7 +52,6 @@ const main = async () => {
 
 main().catch(console.error);
 ```
-
 
 # License
 
