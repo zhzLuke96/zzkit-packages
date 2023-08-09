@@ -15,13 +15,13 @@
   "scripts": {
     "build-dts": "rollup -c ../../common/rollup.dts.config.js",
     "build-js": "microbundle --define process.env.NODE_ENV=production,PKG_VERSION=$npm_package_version",
-    "build": "yarn build-js && yarn build-dts",
+    "build": "pnpm build-js && pnpm build-dts",
     "watch": "microbundle watch --define process.env.NODE_ENV=development,PKG_VERSION=$npm_package_version --compress false",
-    "dev": "yarn watch",
-    "start": "yarn build",
+    "dev": "pnpm watch",
+    "start": "pnpm build",
     "lint": "prettier src -c",
     "format": "prettier src --write",
-    "prepack": "rm -rf dist && yarn run build"
+    "prepack": "rm -rf dist && pnpm run build"
   },
   "keywords": [],
   "author": "zhzluke96",
