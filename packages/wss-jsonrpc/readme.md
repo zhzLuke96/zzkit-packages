@@ -1,6 +1,6 @@
 # @zzkit/wss-jsonrpc
 
-@zzkit/wss-jsonrpc is a library for building decentralized, distributed systems using WebSocket and JSON-RPC. 
+@zzkit/wss-jsonrpc is a library for building decentralized, distributed systems using WebSocket and JSON-RPC.
 
 ## Key Features
 
@@ -16,7 +16,7 @@
 Create a `WorkerNode` instance:
 
 ```js
-const { WorkerNode } = require('@zzkit/wss-jsonrpc');
+const { WorkerNode } = require("@zzkit/wss-jsonrpc");
 
 const node = new WorkerNode();
 ```
@@ -34,18 +34,18 @@ node.listen({ port: 8080 });
 Call `connect()` with a WebSocket URL to connect, which returns a `PeerNode` instance:
 
 ```js
-const url = 'ws://example.com:8080';
+const url = "ws://example.com:8080";
 const peerNode = node.connect(url);
 ```
 
-The `PeerNode` can be used to interact with the connected node: 
+The `PeerNode` can be used to interact with the connected node:
 
 ```js
 // Call remote methods
-const result = await peerNode.request('sum', [1, 2]);
+const result = await peerNode.request("sum", [1, 2]);
 
 // Send notifications
-peerNode.notify('message', ['hello']);
+peerNode.notify("message", ["hello"]);
 ```
 
 The node will automatically check node is alive.
@@ -53,7 +53,7 @@ The node will automatically check node is alive.
 ```ts
 if (peerNode.is_alive === true) {
   console.log(`peerNode alive.`);
-};
+}
 ```
 
 > Note: The peer node will not automatically reconnect. Once the peer node is disconnected, it will be deleted from the connection pool of the work node, so the logic of automatic reconnection needs to be implemented by the upper layer
@@ -63,7 +63,7 @@ if (peerNode.is_alive === true) {
 Expose methods for other nodes to call using `method()`:
 
 ```js
-node.method('sum', (a, b) => a + b);
+node.method("sum", (a, b) => a + b);
 ```
 
 ### Calling remote methods
@@ -71,23 +71,23 @@ node.method('sum', (a, b) => a + b);
 Use `request()` to call a method on all connected nodes:
 
 ```js
-const results = await node.request('sum', [1, 2]);
+const results = await node.request("sum", [1, 2]);
 ```
 
-### Broadcasting notifications 
+### Broadcasting notifications
 
 Use `notify()` to send an update to all nodes without expecting a response:
 
 ```js
-node.notify('message', ['Hello!']); 
+node.notify("message", ["Hello!"]);
 ```
 
 ### Handling events
 
 Subscribe to events like `connection`, `request`, `response`:
 
-```js 
-node.events.on('request', (data, node) => {
+```js
+node.events.on("request", (data, node) => {
   // ...
 });
 ```
@@ -151,7 +151,6 @@ const main = async () => {
 };
 
 main();
-
 ```
 
 ## Contributing
