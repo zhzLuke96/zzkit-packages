@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc-bus",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
@@ -33,9 +33,15 @@
   "dependencies": {
     "@types/ws": "^8.5.5",
     "@zzkit/wss-jsonrpc": "workspace:^",
+    "debug": "^4.3.4",
+    "fastify": "^4.22.0",
+    "node-fetch": "^3.3.2",
     "ws": "^8.13.0"
   },
   "devDependencies": {
+    "@types/debug": "^4.1.8",
+    "commander": "^11.0.0",
+    "esm-hook": "^0.1.4",
     "microbundle": "^0.15.1",
     "rollup-plugin-dts": "^5.3.1",
     "ts-node": "^10.9.1",

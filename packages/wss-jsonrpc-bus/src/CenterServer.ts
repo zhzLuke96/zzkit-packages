@@ -19,6 +19,14 @@ export class CenterServer {
         this.loginService(service_name, node);
       }
     );
+    // 其实peer node断开之后就会自动删除service，不过增加一个接口主动调用
+    this.worker.method(
+      CenterInternalService.service_logout,
+      ([service_name], node) => {
+        // TODO 参数校验
+        this.logoutService(service_name, node);
+      }
+    );
     this.worker.method(
       CenterInternalService.service_call,
       async ([{ service_name, args }], node) => {
@@ -54,16 +62,23 @@ export class CenterServer {
     });
   }
 
+  // 退订服务
+  logoutService(service_name: string, peer_node: WssJsonRPC.PeerNode) {
+    this.services[service_name]?.delete(peer_node);
+    this.job_counter.delete(peer_node);
+    peer_node.disconnect();
+  }
+
   private async getServiceNodes(service_name: string, retry_times = 15) {
     // 如果没有节点就重试
-    let count = 0;
-    while (count < retry_times) {
+    let retry_count = 0;
+    while (retry_count < retry_times) {
       // NOTE: 不能用 [...xxx.values()] 打包会有问题
       const nodes = Array.from(
         this.services[service_name]?.values() || []
       ).filter((x) => x.is_alive);
       if (nodes.length === 0) {
-        count += 1;
+        retry_count += 1;
         await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
@@ -93,26 +108,40 @@ export class CenterServer {
 
   // 调用服务
   async callService(service_name: string, ...args: any[]) {
-    let retry_times = 5;
+    let retry_times = 30;
     while (retry_times) {
       const service_node = await this.getServiceNode(service_name);
       if (!service_node) {
-        throw new Error(`service ${service_name} not found`);
+        retry_times -= 1;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
       }
+      // babel编译bug...这里必须再判断一次
+      if (!service_node) {
+        continue;
+      }
+      this.job_counter.set(
+        service_node,
+        (this.job_counter.get(service_node) ?? 0) + 1
+      );
       try {
-        this.job_counter.set(
-          service_node,
-          (this.job_counter.get(service_node) ?? 0) + 1
-        );
         const result = await service_node.request(service_name, args);
         return result;
       } catch (err) {
         // TODO inner Error class
         if (err instanceof Error && err.message.includes("disconnected")) {
           retry_times -= 1;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
+        } else {
+          // NOTE: 这里必须else里面，不然...编译出错...
+          console.log(
+            err instanceof Error,
+            err.message,
+            err.message.includes("disconnected")
+          );
+          throw err;
         }
-        throw err;
       } finally {
         this.job_counter.set(
           service_node,
@@ -120,6 +149,7 @@ export class CenterServer {
         );
       }
     }
+    throw new Error(`service ${service_name} not found`);
   }
 
   close() {

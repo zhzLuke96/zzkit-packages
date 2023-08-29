@@ -1,6 +1,10 @@
 import { WssJsonRPC } from "@zzkit/wss-jsonrpc";
 import { CenterInternalService } from "./types";
 
+import debug from "debug";
+
+const log = debug("wss-jsonrpc-bus:service-node");
+
 async function retry<T>(
   fn: () => Promise<T>,
   options: {
@@ -11,15 +15,18 @@ async function retry<T>(
 ) {
   const { times, delayMS, exceeded_error } = options;
 
+  let last_error: Error | undefined;
   for (let i = 0; i < times; i++) {
     try {
       return await fn();
     } catch (err) {
+      last_error = err;
+      log(`retry ${i} times, error: ${err.message}`);
       await new Promise((resolve) => setTimeout(resolve, delayMS));
     }
   }
 
-  throw exceeded_error || new Error("Exceeded retry times");
+  throw exceeded_error || last_error || new Error("Exceeded retry times");
 }
 
 export interface ServiceNodeOptions {
@@ -36,7 +43,7 @@ export class ServiceNode {
     this.center_node = this.connectCenterNode();
   }
 
-  private async connectCenterNode() {
+  async connectCenterNode() {
     const {
       retry_interval = 1000,
       retry_times = 30,
@@ -47,7 +54,7 @@ export class ServiceNode {
       async () => {
         const center_node = this.worker.connect(center_url);
         center_node.events.on("connected", () => {
-          console.log(`connected to ${center_url}`);
+          log(`[connected]connect to ${center_url}`);
         });
         await center_node.ready;
         return center_node;
@@ -63,20 +70,28 @@ export class ServiceNode {
 
   // 保证center node已连接并可用
   private async ensureCenterNode() {
-    let center_node = await this.center_node;
-    if (!center_node?.is_alive) {
-      center_node = await this.connectCenterNode();
-      this.center_node = Promise.resolve(center_node);
+    const current_peer_node = await this.center_node;
+    if (current_peer_node?.is_alive) {
+      return current_peer_node;
     }
-    return center_node;
+    this.center_node = this.connectCenterNode();
+    return this.center_node;
   }
 
   // 注册服务
-  async register(service_name: string, service_fn: (...args: any[]) => any) {
-    this.worker.method(service_name, async (params, peer_node) => {
-      const result = await service_fn(...params);
-      return result;
-    });
+  async register(
+    service_name: string,
+    service_fn: (...args: any[]) => any,
+    options?: { overwrite?: boolean }
+  ) {
+    this.worker.method(
+      service_name,
+      async (params, peer_node) => {
+        const result = await service_fn(...params);
+        return result;
+      },
+      options
+    );
 
     return (await this.ensureCenterNode()).request(
       CenterInternalService.service_login,
@@ -93,5 +108,6 @@ export class ServiceNode {
 
   close() {
     this.worker.close();
+    log(`worker close: ${this.worker.id}`);
   }
 }

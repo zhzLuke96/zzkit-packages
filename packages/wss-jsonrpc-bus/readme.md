@@ -53,6 +53,47 @@ const main = async () => {
 main().catch(console.error);
 ```
 
+# CenterServer
+WIP
+
+# ServiceNode
+WIP
+
+# Sidecar
+WIP
+
+## Sidecar.HttpSidecar
+```ts
+  const sidecar1 = new Sidecar.HttpSidecar(
+    "func1",
+    {
+      center_url: `ws://localhost:${port}`,
+    },
+    {
+      base_url: `http://localhost:${sev1.port}/`,
+      service_path: "/func1",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  
+  await sidecar1.start();
+```
+
+## Sidecar.JsonrpcSidecar
+WIP
+
+## Sidecar.GrpcSidecar
+WIP
+
+## Sidecar.ThriftSidecar
+WIP
+
+## Sidecar.WebSocketSidecar
+WIP
+
 # License
 
 Apache-2.0

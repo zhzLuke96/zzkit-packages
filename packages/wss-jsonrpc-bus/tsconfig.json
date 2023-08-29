@@ -23,7 +23,7 @@
     "declarationDir": null,
     "lib": ["es2020", "dom"]
   },
-  "include": ["src/**/*", "__tests__/**/*"],
+  "include": ["src/**/*", "src-cli/**/*", "__tests__/**/*"],
   "ts-node": {
     "transpileOnly": true,
     "files": true,

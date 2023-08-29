@@ -89,7 +89,7 @@ export namespace WssJsonRPC {
       request_timeout: 5 * 60 * 1000, // 5min
     };
 
-    readonly peer_node_id = uuid();
+    readonly id = uuid();
     readonly ready: Promise<boolean>;
 
     private _is_alive = true;
@@ -241,6 +241,8 @@ export namespace WssJsonRPC {
   }
 
   export class WorkerNode {
+    readonly id = uuid();
+
     readonly events = new RPCNodeEvent<{
       connection: (socket: WebSocket, request: IncomingMessage) => any;
     }>();
@@ -263,7 +265,7 @@ export namespace WssJsonRPC {
     }
 
     private addPeerNode(peer_node: PeerNode) {
-      this.peer_nodes.set(peer_node.peer_node_id, peer_node);
+      this.peer_nodes.set(peer_node.id, peer_node);
 
       peer_node.events.on("request", (data, node) => {
         this.events.emit("request", data, node);
@@ -275,7 +277,7 @@ export namespace WssJsonRPC {
         this.events.emit("error", err);
       });
       peer_node.events.on("disconnected", (node) => {
-        this.removePeerNode(node.peer_node_id);
+        this.removePeerNode(node.id);
       });
 
       return peer_node;
@@ -318,8 +320,18 @@ export namespace WssJsonRPC {
     }
 
     // register method
-    method(name: string, callback: (params: any[], node: PeerNode) => any) {
-      if (this.methods.has(name)) {
+    method(
+      name: string,
+      callback: (params: any[], node: PeerNode) => any,
+      {
+        overwrite = false,
+      }: {
+        overwrite?: boolean;
+      } = {
+        overwrite: false,
+      }
+    ) {
+      if (!overwrite && this.methods.has(name)) {
         throw new Error(`Method ${name} already exists`);
       }
       this.methods.set(name, callback);
@@ -348,6 +360,7 @@ export namespace WssJsonRPC {
       try {
         const result = await callback(params, peer_node);
         if (result?.["jsonrpc"] === "2.0") {
+          // 如果返回的是jsonrpc对象，就解构
           await peer_node.respond({
             ...result,
             id,

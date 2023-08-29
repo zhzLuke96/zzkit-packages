@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
