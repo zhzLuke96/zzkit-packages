@@ -26,6 +26,9 @@ importers:
       '@types/ws':
         specifier: ^8.5.5
         version: registry.npmmirror.com/@types/ws@8.5.5
+      '@zzkit/disposable':
+        specifier: workspace:^
+        version: link:../disposable
       eventemitter3:
         specifier: ^5.0.1
         version: registry.npmmirror.com/eventemitter3@5.0.1
@@ -63,6 +66,9 @@ importers:
       '@types/ws':
         specifier: ^8.5.5
         version: registry.npmmirror.com/@types/ws@8.5.5
+      '@zzkit/disposable':
+        specifier: workspace:^
+        version: link:../disposable
       '@zzkit/wss-jsonrpc':
         specifier: workspace:^
         version: link:../wss-jsonrpc

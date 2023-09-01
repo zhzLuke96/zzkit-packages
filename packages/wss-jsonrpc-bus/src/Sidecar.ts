@@ -1,6 +1,7 @@
 import { ServiceNode, ServiceNodeOptions } from "./ServiceNode";
 import debug from "debug";
 import EventEmitter from "eventemitter3";
+import { Disposable } from "@zzkit/disposable";
 
 const log = debug("wss-jsonrpc-bus:sidecar");
 
@@ -13,7 +14,7 @@ const url_join = (base_url: string, path: string) =>
  * 同时根据配置将服务注册到中心服务中
  */
 
-export class Sidecar {
+export class Sidecar extends Disposable {
   events = new EventEmitter<{
     start: () => void;
     stop: () => void;
@@ -27,6 +28,14 @@ export class Sidecar {
     readonly serviceName: string,
     serviceNodeOptions: ServiceNodeOptions
   ) {
+    super();
+
+    this.whenDispose(() => {
+      this.stop();
+      this.serviceNode.dispose();
+      this.events.removeAllListeners();
+    });
+
     this.serviceNode = new ServiceNode(serviceNodeOptions);
   }
 

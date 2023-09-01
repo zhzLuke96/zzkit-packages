@@ -26,18 +26,18 @@ const main = async () => {
 
   //   sev1.close();
   await Promise.all([
-    center.callService("sum", 1, 2).then((result) => console.log({ result })),
-    center.callService("sum", 1, 2).then((result) => console.log({ result })),
-    center.callService("sum", 1, 2).then((result) => console.log({ result })),
-    center.callService("sum", 1, 2).then((result) => console.log({ result })),
+    center.callService("sum", 1, 2).then((result) => console.log(result)),
+    center.callService("sum", 1, 2).then((result) => console.log(result)),
+    center.callService("sum", 1, 2).then((result) => console.log(result)),
+    center.callService("sum", 1, 2).then((result) => console.log(result)),
   ]);
 
   sev1.close();
 
-  console.log({ result: await center.callService("sum", 1, 2) });
-  console.log({ result: await center.callService("sum", 1, 2) });
-  console.log({ result: await center.callService("sum", 1, 2) });
-  console.log({ result: await center.callService("sum", 1, 2) });
+  console.log(await center.callService("sum", 1, 2));
+  console.log(await center.callService("sum", 1, 2));
+  console.log(await center.callService("sum", 1, 2));
+  console.log(await center.callService("sum", 1, 2));
 
   center.close();
   sev2.close();

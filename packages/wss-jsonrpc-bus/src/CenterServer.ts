@@ -4,7 +4,9 @@ import WebSocket from "ws";
 import { CenterInternalService } from "./types";
 import EventEmitter from "eventemitter3";
 
-export class CenterServer {
+import { Disposable } from "@zzkit/disposable";
+
+export class CenterServer extends Disposable {
   events = new EventEmitter<{
     call: (
       service_name: string,
@@ -14,6 +16,7 @@ export class CenterServer {
     login: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
     logout: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
     disconnect: (peer_node: WssJsonRPC.PeerNode) => void;
+    close: () => void;
   }>();
 
   worker = new WssJsonRPC.WorkerNode();
@@ -24,6 +27,20 @@ export class CenterServer {
   job_counter = new WeakMap<WssJsonRPC.PeerNode, number>();
 
   constructor() {
+    super();
+
+    this.whenDispose(() => {
+      this.close();
+      this.worker.dispose();
+      for (const services of Object.values(this.services)) {
+        for (const node of services) {
+          node.dispose();
+        }
+      }
+      this.services = {};
+      this.events.removeAllListeners();
+    });
+
     this.worker.method(
       CenterInternalService.service_login,
       ([service_name], node) => {
@@ -169,6 +186,12 @@ export class CenterServer {
   }
 
   close() {
+    for (const services of Object.values(this.services)) {
+      for (const node of services) {
+        node.disconnect();
+      }
+    }
     this.worker.close();
+    this.events.emit("close");
   }
 }

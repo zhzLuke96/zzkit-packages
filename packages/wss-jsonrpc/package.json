@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.5.5",
+    "@zzkit/disposable": "workspace:^",
     "eventemitter3": "^5.0.1",
     "uuid": "^9.0.0",
     "ws": "^8.13.0"

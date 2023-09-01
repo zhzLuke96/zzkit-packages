@@ -4,6 +4,8 @@ import WebSocket from "ws";
 import { v4 as uuid } from "uuid";
 import EventEmitter from "eventemitter3";
 
+import { Disposable } from "@zzkit/disposable";
+
 export namespace WssJsonRPC {
   export interface Request<Params = any[]> {
     jsonrpc: "2.0";
@@ -77,7 +79,7 @@ export namespace WssJsonRPC {
    * NOTE: 这里是不管重试的，断线重试需要上级实现
    * NOTE: 这个对象不应该由用户创建，export 是为了类型安全需要
    */
-  export class PeerNode {
+  export class PeerNode extends Disposable {
     readonly events = new RPCNodeEvent<{
       connected: (node: PeerNode) => any;
       disconnected: (node: PeerNode) => any;
@@ -100,6 +102,13 @@ export namespace WssJsonRPC {
     private heart_beat_timer = 0 as any;
 
     constructor(readonly socket: WebSocket) {
+      super();
+
+      this.whenDispose(() => {
+        this.disconnect();
+        this.events.removeAllListeners();
+      });
+
       const update_alive_timer = () => {
         clearTimeout(this.is_alive_timer);
         this.is_alive_timer = setTimeout(() => {
@@ -234,13 +243,12 @@ export namespace WssJsonRPC {
       this.socket.terminate();
       this.events.emit("disconnected", this);
 
-      this.events.removeAllListeners();
       clearTimeout(this.is_alive_timer);
       clearInterval(this.heart_beat_timer);
     }
   }
 
-  export class WorkerNode {
+  export class WorkerNode extends Disposable {
     readonly id = uuid();
 
     readonly events = new RPCNodeEvent<{
@@ -253,6 +261,13 @@ export namespace WssJsonRPC {
     private methods = new Map<string, (...params: any[]) => any>();
 
     constructor() {
+      super();
+      this.whenDispose(() => {
+        this.close();
+        this.events.removeAllListeners();
+        this.methods.clear();
+      });
+
       this.events.on("connection", (socket, request) => {
         this.onConnection(socket, request);
       });

@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc-bus",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.5.5",
+    "@zzkit/disposable": "workspace:^",
     "@zzkit/wss-jsonrpc": "workspace:^",
     "debug": "^4.3.4",
     "eventemitter3": "^5.0.1",

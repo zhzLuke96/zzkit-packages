@@ -14,9 +14,12 @@ const start_example = async () => {
     return "pong";
   });
   app.post<{
-    Body: [number, number];
+    Body: {
+      a: number;
+      b: number;
+    };
   }>("/func1", async function handler(request, reply) {
-    const [a, b] = request.body;
+    const { a, b } = request.body;
     await new Promise((resolve, reject) => setTimeout(resolve, 2000));
     return a + b;
   });
@@ -65,12 +68,17 @@ const main = async () => {
   );
   await sidecar1.start();
 
+  const body = {
+    a: 1,
+    b: 2,
+  };
+
   //   sev1.close();
   await Promise.all([
-    center.callService("func1", 1, 2).then((result) => console.log({ result })),
-    center.callService("func1", 1, 2).then((result) => console.log({ result })),
-    center.callService("func1", 1, 2).then((result) => console.log({ result })),
-    center.callService("func1", 1, 2).then((result) => console.log({ result })),
+    center.callService("func1", body).then(({ result }) => console.log(result)),
+    center.callService("func1", body).then(({ result }) => console.log(result)),
+    center.callService("func1", body).then(({ result }) => console.log(result)),
+    center.callService("func1", body).then(({ result }) => console.log(result)),
   ]);
 
   sev1.app.close();
@@ -83,10 +91,10 @@ const main = async () => {
     }, 10 * 1000);
   }, 10 * 1000);
 
-  console.log({ result: await center.callService("func1", 1, 2) });
-  console.log({ result: await center.callService("func1", 1, 2) });
-  console.log({ result: await center.callService("func1", 1, 2) });
-  console.log({ result: await center.callService("func1", 1, 2) });
+  console.log(await center.callService("func1", body));
+  console.log(await center.callService("func1", body));
+  console.log(await center.callService("func1", body));
+  console.log(await center.callService("func1", body));
 
   center.close();
 };

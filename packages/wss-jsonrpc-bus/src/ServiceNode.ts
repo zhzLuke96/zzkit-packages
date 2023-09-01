@@ -3,6 +3,7 @@ import { CenterInternalService } from "./types";
 
 import debug from "debug";
 import EventEmitter from "eventemitter3";
+import { Disposable } from "@zzkit/disposable";
 
 const log = debug("wss-jsonrpc-bus:service-node");
 
@@ -36,7 +37,7 @@ export interface ServiceNodeOptions {
   retry_interval?: number;
 }
 
-export class ServiceNode {
+export class ServiceNode extends Disposable {
   events = new EventEmitter<{
     call: (service_name: string, args: any[]) => void;
     register: (service_name: string) => void;
@@ -48,6 +49,13 @@ export class ServiceNode {
   center_node?: Promise<WssJsonRPC.PeerNode>;
 
   constructor(readonly options: ServiceNodeOptions) {
+    super();
+    this.whenDispose(() => {
+      this.close();
+      this.worker.dispose();
+      this.center_node?.then((node) => node.dispose());
+      this.events.removeAllListeners();
+    });
     this.center_node = this.connectCenterNode();
   }
 
