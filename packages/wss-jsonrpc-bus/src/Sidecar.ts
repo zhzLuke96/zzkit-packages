@@ -1,5 +1,6 @@
 import { ServiceNode, ServiceNodeOptions } from "./ServiceNode";
 import debug from "debug";
+import EventEmitter from "eventemitter3";
 
 const log = debug("wss-jsonrpc-bus:sidecar");
 
@@ -13,6 +14,13 @@ const url_join = (base_url: string, path: string) =>
  */
 
 export class Sidecar {
+  events = new EventEmitter<{
+    start: () => void;
+    stop: () => void;
+    restart: () => void;
+    disconnect: () => void;
+  }>();
+
   serviceNode: ServiceNode;
 
   constructor(
@@ -42,17 +50,22 @@ export class Sidecar {
         overwrite: true,
       }
     );
+    this.events.emit("start");
   }
 
   async restart() {
     log(`[restart] ${this.serviceNode.worker.id}`);
     await this.disconnect();
     await this.start();
+
+    this.events.emit("restart");
   }
 
   async stop() {
     log(`[stop] ${this.serviceNode.worker.id}`);
     this.serviceNode.close();
+
+    this.events.emit("stop");
   }
 
   protected async healthCheck() {
@@ -64,6 +77,8 @@ export class Sidecar {
     log(`[disconnect] ${this.serviceNode.worker.id}`);
     const center_node = await this.serviceNode.center_node;
     center_node?.disconnect();
+
+    this.events.emit("disconnect");
   }
 
   protected async ensureServiceAvailable() {
@@ -115,7 +130,7 @@ export class Sidecar {
   }
 }
 
-interface HttpEndpointOptions {
+export interface HttpEndpointOptions {
   base_url: string;
   service_path: string;
   method: string;

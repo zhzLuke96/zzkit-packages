@@ -2,6 +2,7 @@ import { WssJsonRPC } from "@zzkit/wss-jsonrpc";
 import { CenterInternalService } from "./types";
 
 import debug from "debug";
+import EventEmitter from "eventemitter3";
 
 const log = debug("wss-jsonrpc-bus:service-node");
 
@@ -36,6 +37,13 @@ export interface ServiceNodeOptions {
 }
 
 export class ServiceNode {
+  events = new EventEmitter<{
+    call: (service_name: string, args: any[]) => void;
+    register: (service_name: string) => void;
+    close: () => void;
+    connected: (center_node: WssJsonRPC.PeerNode) => void;
+  }>();
+
   worker = new WssJsonRPC.WorkerNode();
   center_node?: Promise<WssJsonRPC.PeerNode>;
 
@@ -65,6 +73,7 @@ export class ServiceNode {
         exceeded_error: new Error("center node not connected"),
       }
     );
+    this.events.emit("connected", center_node);
     return center_node;
   }
 
@@ -92,6 +101,7 @@ export class ServiceNode {
       },
       options
     );
+    this.events.emit("register", service_name);
 
     return (await this.ensureCenterNode()).request(
       CenterInternalService.service_login,
@@ -100,6 +110,8 @@ export class ServiceNode {
   }
 
   async callService<Result = any>(service_name: string, ...args: any[]) {
+    this.events.emit("call", service_name, args);
+
     return (await this.ensureCenterNode()).request<Result>(
       CenterInternalService.service_call,
       [{ service_name, args }]
@@ -109,5 +121,6 @@ export class ServiceNode {
   close() {
     this.worker.close();
     log(`worker close: ${this.worker.id}`);
+    this.events.emit("close");
   }
 }

@@ -2,8 +2,20 @@ import { IncomingMessage } from "http";
 import { WssJsonRPC } from "@zzkit/wss-jsonrpc";
 import WebSocket from "ws";
 import { CenterInternalService } from "./types";
+import EventEmitter from "eventemitter3";
 
 export class CenterServer {
+  events = new EventEmitter<{
+    call: (
+      service_name: string,
+      args: any[],
+      peer_node: WssJsonRPC.PeerNode
+    ) => void;
+    login: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
+    logout: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
+    disconnect: (peer_node: WssJsonRPC.PeerNode) => void;
+  }>();
+
   worker = new WssJsonRPC.WorkerNode();
 
   // 服务名和对应的提供服务的节点
@@ -56,9 +68,11 @@ export class CenterServer {
     this.services[service_name] ||= new Set();
     this.services[service_name].add(peer_node);
     this.job_counter.set(peer_node, 0);
+    this.events.emit("login", service_name, peer_node);
 
     peer_node.events.on("disconnected", () => {
       this.services[service_name].delete(peer_node);
+      this.events.emit("disconnect", peer_node);
     });
   }
 
@@ -67,6 +81,7 @@ export class CenterServer {
     this.services[service_name]?.delete(peer_node);
     this.job_counter.delete(peer_node);
     peer_node.disconnect();
+    this.events.emit("logout", service_name, peer_node);
   }
 
   private async getServiceNodes(service_name: string, retry_times = 15) {
@@ -124,6 +139,7 @@ export class CenterServer {
         service_node,
         (this.job_counter.get(service_node) ?? 0) + 1
       );
+      this.events.emit("call", service_name, args, service_node);
       try {
         const result = await service_node.request(service_name, args);
         return result;
