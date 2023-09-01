@@ -96,6 +96,12 @@ export class Sidecar {
           return true;
         }
       } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("fetch is not defined")
+        ) {
+          throw error;
+        }
         log(`health check failed, retry ${i} times, error: ${error.message}`);
       }
       await new Promise((resolve) => setTimeout(resolve, retry_interval));
@@ -151,14 +157,15 @@ export class HttpSidecar extends Sidecar {
     return url_join(base_url, service_path);
   }
 
-  async endpoint(...params: any[]): Promise<any> {
+  // 只处理第一个参数body
+  async endpoint(body: any): Promise<any> {
     const { method, headers } = this.endpointOptions;
     const { url } = this;
 
     const response = await fetch(url, {
       method,
       headers,
-      body: JSON.stringify(params),
+      body: JSON.stringify(body),
     });
     const rawText = await response.text();
     try {
