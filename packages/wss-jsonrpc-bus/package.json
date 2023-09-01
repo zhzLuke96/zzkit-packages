@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/wss-jsonrpc-bus",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
