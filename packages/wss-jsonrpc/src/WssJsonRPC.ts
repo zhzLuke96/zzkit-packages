@@ -193,7 +193,7 @@ export namespace WssJsonRPC {
           if (data.id !== request.id) {
             return;
           }
-          resolve(data.result);
+          resolve(data);
           clearTimeout(timer);
         });
         this.events.on("error", (err) => {
