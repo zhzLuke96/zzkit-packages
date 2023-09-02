@@ -83,6 +83,7 @@ export namespace WssJsonRPC {
     readonly events = new RPCNodeEvent<{
       connected: (node: PeerNode) => any;
       disconnected: (node: PeerNode) => any;
+      timeout: (node: PeerNode) => any;
     }>();
 
     static timeouts = {
@@ -98,57 +99,83 @@ export namespace WssJsonRPC {
     public get is_alive() {
       return this._is_alive;
     }
-    private is_alive_timer = 0 as any;
-    private heart_beat_timer = 0 as any;
+
+    public get isConnected() {
+      return this.socket.readyState === WebSocket.OPEN;
+    }
 
     constructor(readonly socket: WebSocket) {
       super();
 
       this.whenDispose(() => {
+        this._is_alive = false;
         this.disconnect();
         this.events.removeAllListeners();
       });
-
-      const update_alive_timer = () => {
-        clearTimeout(this.is_alive_timer);
-        this.is_alive_timer = setTimeout(() => {
-          this._is_alive = false;
-          this.disconnect();
-        }, PeerNode.timeouts.connection_timeout);
-      };
-      update_alive_timer();
 
       socket.on("message", (data) => this.events.emit("message", data, this));
       socket.on("error", (err) => this.events.emit("error", err));
       socket.on("close", () => {
         this.events.emit("close");
-        this.disconnect();
-      });
-      socket.on("pong", () => {
-        this._is_alive = true;
-        update_alive_timer();
+        this.dispose();
       });
 
       this.events.on("message", (data) => {
         this.onMessage(data);
       });
 
-      if (socket.readyState === WebSocket.OPEN) {
-        this.ready = Promise.resolve(true);
+      this.ready = this.setup();
+      this.startHeartbeat();
+    }
+
+    private async setup() {
+      if (this.socket.readyState === WebSocket.OPEN) {
         this.events.emit("connected", this);
+        return true;
       } else {
-        this.ready = new Promise((resolve, reject) => {
-          socket.once("open", () => {
+        return new Promise<boolean>((resolve, reject) => {
+          this.socket.once("open", () => {
             resolve(true);
             this.events.emit("connected", this);
           });
-          socket.once("error", (err) => reject(err));
+          this.socket.once("error", (err) => reject(err));
         });
       }
+    }
 
-      this.heart_beat_timer = setInterval(() => {
-        socket.ping();
+    private startHeartbeat() {
+      // 开始心跳
+      let timeout_timer: any;
+      const update_timeout = () => {
+        clearTimeout(timeout_timer);
+        if (!this.isConnected) {
+          return;
+        }
+        timeout_timer = setTimeout(() => {
+          this._is_alive = false;
+          this.events.emit("timeout", this);
+        }, PeerNode.timeouts.connection_timeout);
+      };
+      update_timeout();
+      this.socket.on("pong", () => {
+        this._is_alive = true;
+        update_timeout();
+      });
+      this.whenDispose(() => {
+        clearTimeout(timeout_timer);
+      });
+
+      let heartbeat_timer: any;
+      heartbeat_timer = setInterval(() => {
+        if (!this.isConnected) {
+          clearInterval(heartbeat_timer);
+          return;
+        }
+        this.socket.ping();
       }, PeerNode.timeouts.each_heartbeat);
+      this.whenDispose(() => {
+        clearInterval(heartbeat_timer);
+      });
     }
 
     private onMessage(data: any) {
@@ -239,12 +266,12 @@ export namespace WssJsonRPC {
 
     disconnect() {
       this._is_alive = false;
+      if (!this.isConnected) {
+        return;
+      }
       this.socket.close();
       this.socket.terminate();
       this.events.emit("disconnected", this);
-
-      clearTimeout(this.is_alive_timer);
-      clearInterval(this.heart_beat_timer);
     }
   }
 

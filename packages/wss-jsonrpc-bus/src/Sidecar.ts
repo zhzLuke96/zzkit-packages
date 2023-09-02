@@ -37,6 +37,10 @@ export class Sidecar extends Disposable {
     });
 
     this.serviceNode = new ServiceNode(serviceNodeOptions);
+
+    this.serviceNode.events.on("connected", () => {
+      this.onConnected();
+    });
   }
 
   async endpoint(...args: any[]): Promise<any> {
@@ -46,6 +50,10 @@ export class Sidecar extends Disposable {
   // start service
   async start() {
     await this.reconnect();
+    this.events.emit("start");
+  }
+
+  async onConnected() {
     await this.serviceNode.register(
       this.serviceName,
       async (...params) => {
@@ -59,7 +67,6 @@ export class Sidecar extends Disposable {
         overwrite: true,
       }
     );
-    this.events.emit("start");
   }
 
   async restart() {

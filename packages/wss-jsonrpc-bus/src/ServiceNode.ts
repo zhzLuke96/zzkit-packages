@@ -82,6 +82,10 @@ export class ServiceNode extends Disposable {
       }
     );
     this.events.emit("connected", center_node);
+    center_node.events.once("close", () => {
+      log(`[close]center node closed: ${this.worker.id}`);
+      this.ensureCenterNode();
+    });
     return center_node;
   }
 
@@ -91,6 +95,7 @@ export class ServiceNode extends Disposable {
     if (current_peer_node?.is_alive) {
       return current_peer_node;
     }
+    log(`[reconnect]center node not alive, reconnect: ${this.worker.id}`);
     this.center_node = this.connectCenterNode();
     return this.center_node;
   }
@@ -110,6 +115,7 @@ export class ServiceNode extends Disposable {
       options
     );
     this.events.emit("register", service_name);
+    log(`[register] service: ${service_name}`);
 
     return (await this.ensureCenterNode()).request(
       CenterInternalService.service_login,
@@ -119,6 +125,7 @@ export class ServiceNode extends Disposable {
 
   async callService<Result = any>(service_name: string, ...args: any[]) {
     this.events.emit("call", service_name, args);
+    log(`[call] service: ${service_name}, args: ${JSON.stringify(args)}`);
 
     return (await this.ensureCenterNode()).request<Result>(
       CenterInternalService.service_call,

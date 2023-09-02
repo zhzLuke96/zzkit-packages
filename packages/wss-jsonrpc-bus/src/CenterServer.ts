@@ -15,7 +15,7 @@ export class CenterServer extends Disposable {
     ) => void;
     login: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
     logout: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
-    disconnect: (peer_node: WssJsonRPC.PeerNode) => void;
+    disconnect: (service_name: string, peer_node: WssJsonRPC.PeerNode) => void;
     close: () => void;
   }>();
 
@@ -88,16 +88,18 @@ export class CenterServer extends Disposable {
     this.events.emit("login", service_name, peer_node);
 
     peer_node.events.on("disconnected", () => {
-      this.services[service_name].delete(peer_node);
-      this.events.emit("disconnect", peer_node);
+      this.logoutService(service_name, peer_node);
+      this.events.emit("disconnect", service_name, peer_node);
     });
   }
 
   // 退订服务
   logoutService(service_name: string, peer_node: WssJsonRPC.PeerNode) {
+    if (peer_node.is_alive) {
+      peer_node.disconnect();
+    }
     this.services[service_name]?.delete(peer_node);
     this.job_counter.delete(peer_node);
-    peer_node.disconnect();
     this.events.emit("logout", service_name, peer_node);
   }
 
