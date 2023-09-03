@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/i18n",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
@@ -36,9 +36,8 @@
   "devDependencies": {
     "ts-node": "^10.9.1",
     "tslib": "^2.6.1",
-    "typescript": "^5.1.6"
-  },
-  "dependencies": {
+    "typescript": "^5.1.6",
     "microbundle": "^0.15.1"
-  }
+  },
+  "dependencies": {}
 }
