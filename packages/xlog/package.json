@@ -1,0 +1,42 @@
+{
+  "name": "@zzkit/xlog",
+  "version": "0.1.0",
+  "description": "",
+  "source": "src/main.ts",
+  "main": "dist/main.umd.js",
+  "module": "dist/main.module.mjs",
+  "unpkg": "dist/main.umd.js",
+  "types": "./dist/main.d.ts",
+  "exports": {
+    "types": "./dist/main.d.ts",
+    "require": "./dist/main.js",
+    "default": "./dist/main.modern.mjs"
+  },
+  "scripts": {
+    "build-dts": "rollup -c ../../common/rollup.dts.config.js",
+    "build-js": "microbundle --define process.env.NODE_ENV=production,PKG_VERSION=$npm_package_version",
+    "build": "pnpm build-js && pnpm build-dts",
+    "watch": "microbundle watch --define process.env.NODE_ENV=development,PKG_VERSION=$npm_package_version --compress false",
+    "dev": "pnpm watch",
+    "start": "pnpm build",
+    "prepack": "rm -rf dist && pnpm run build"
+  },
+  "keywords": [],
+  "author": "zhzluke96",
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.4.9",
+    "microbundle": "^0.15.1",
+    "ts-lib": "^0.0.5",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
+  }
+}
