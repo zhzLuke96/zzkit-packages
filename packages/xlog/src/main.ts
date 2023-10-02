@@ -268,11 +268,14 @@ const stackUsefulFilter = (data: LogData) =>
   data.stack.filter(
     (x) => !x.file.startsWith("node:") && !x.file.includes("node_modules")
   );
-const timeStr = (data: LogData) => new Date(data.timestamp).toISOString();
+const timeStr = (data: LogData) =>
+  new Date(data.timestamp).toLocaleDateString() +
+  " " +
+  new Date(data.timestamp).toLocaleTimeString();
 
 export const transport_formatters = {
   line1_colorize: (data: LogData) => {
-    const time = timeStr(data).slice(0, 19).replace("T", " ");
+    const time = timeStr(data);
     const stack0 = stackUsefulFilter(data)[0];
     const color = level2color[data.level];
     if (!stack0) {
@@ -281,7 +284,7 @@ export const transport_formatters = {
     return `[${time}] ${color}[${data.level}]\x1b[0m [${stack0.file}:${stack0.line}:${stack0.column}] ${data.msg}`.trim();
   },
   line1: (data: LogData) => {
-    const time = timeStr(data).slice(0, 19).replace("T", " ");
+    const time = timeStr(data);
     const stack0 = stackUsefulFilter(data)[0];
     if (!stack0) {
       return `[${time}] [${data.level}] ${data.msg}`.trim();
@@ -290,9 +293,7 @@ export const transport_formatters = {
   },
   apache: (data: LogData) => {
     const time = timeStr(data);
-    const stack0 = data.stack.filter(
-      (x) => !x.file.startsWith("node:") && !x.file.includes("node_modules")
-    )[0];
+    const stack0 = stackUsefulFilter(data)[0];
     if (!stack0) {
       return `[${time}] [${data.level}] ${data.msg}`.trim() + "\n";
     }
