@@ -61,12 +61,23 @@ export interface TransportFormatter {
 
 export class Logger {
   static readonly origConsole = { ...console } as typeof console;
+  static defaultMessageFormatter(...args: any[]) {
+    return args
+      .map((item) => {
+        if (typeof item === "string" || item instanceof String) {
+          return item;
+        }
+        return JSON.stringify(item);
+      })
+      .join(" ");
+  }
 
   constructor(
     readonly config: {
       transports: Transport[];
       formatters: LogFormatter[];
       hidden_orig_console?: boolean;
+      message_formatter?: (...args: any[]) => string;
     }
   ) {
     this.hookConsole();
@@ -78,7 +89,10 @@ export class Logger {
       console[level] = (...args: any[]) => {
         const stack = parseStack(new Error().stack?.split("\n").slice(2) || []);
 
-        this.log(level, args.join(" "), stack);
+        const msg = (
+          this.config.message_formatter || Logger.defaultMessageFormatter
+        )(...args);
+        this.log(level, msg, stack);
         if (this.config.hidden_orig_console) {
           return;
         }
