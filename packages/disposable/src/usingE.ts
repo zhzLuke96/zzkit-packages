@@ -32,7 +32,7 @@ export function usingE<
 >(
   disposable: [T, T2, T3, T4, T5],
   action: (r: T, r2: T2, r3: T3, r4: T4, r5: T5) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<
   T extends IDisposable,
   T2 extends IDisposable,
@@ -42,7 +42,7 @@ export function usingE<
 >(
   disposable: [T, T2, T3, T4],
   action: (r: T, r2: T2, r3: T3, r4: T4) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<
   T extends IDisposable,
   T2 extends IDisposable,
@@ -51,27 +51,27 @@ export function usingE<
 >(
   disposable: [T, T2, T3],
   action: (r: T, r2: T2, r3: T3) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<T extends IDisposable, T2 extends IDisposable, U>(
   disposable: [T, T2],
   action: (r: T, r2: T2) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<T extends IDisposable, U>(
   disposable: [T],
   action: (r: T) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<T extends IDisposable, U>(
   disposable: T,
   action: (r: T) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export function usingE<U>(
   disposable: IDisposable[],
   action: (...r: IDisposable[]) => U | Promise<U>
-): Promise<[null, U] | [Error, undefined]>;
+): Promise<U>;
 export async function usingE(
   disposable: IDisposable | IDisposable[],
   action: (...r: IDisposable[]) => any
-): Promise<[null, any] | [Error, undefined]> {
+): Promise<any> {
   const [err, result] = await using(disposable as any, action);
   if (err) {
     throw err;
