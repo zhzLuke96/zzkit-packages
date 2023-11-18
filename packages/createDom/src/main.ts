@@ -138,6 +138,11 @@ export namespace CreateDom {
       ? el.attachShadow({ mode: props.attachShadow })
       : null;
 
+    // class => className
+    if (props?.class) {
+      props.className = props.class;
+    }
+
     for (const prop in props) {
       if (prop === "ref") {
         const ref = props.ref;
