@@ -186,7 +186,7 @@ class DailyFileTransport extends FileTransport {
       filename_to_date: (filename: string) => Date | null;
 
       // 保存多少天的日志
-      maxFiles_day?: number;
+      max_days?: number;
 
       filter?: (data: LogData) => boolean;
       formatter?: (data: LogData) => string;
@@ -206,8 +206,8 @@ class DailyFileTransport extends FileTransport {
   }
 
   protected removeOldFiles() {
-    const { filename_to_date, maxFiles_day } = this.daily_config;
-    if (!maxFiles_day) {
+    const { filename_to_date, max_days } = this.daily_config;
+    if (!max_days) {
       return;
     }
 
@@ -219,7 +219,7 @@ class DailyFileTransport extends FileTransport {
       if (!date) {
         return;
       }
-      const msN = maxFiles_day * 24 * 3600 * 1000;
+      const msN = max_days * 24 * 60 * 60 * 1000;
       if (now.getTime() - date.getTime() > msN) {
         const filepath = path.join(dir, file);
         fs.unlinkSync(filepath);
