@@ -135,9 +135,14 @@ class FileTransport implements Transport {
     if (!this.flush_timer) {
       this.flush_timer = setTimeout(() => {
         this.flush();
+        this.clear();
         this.flush_timer = null;
       }, this.config.save_freq_ms ?? 1000);
     }
+  }
+
+  protected clear() {
+    this.buffer = [];
   }
 
   protected flush(): void {
