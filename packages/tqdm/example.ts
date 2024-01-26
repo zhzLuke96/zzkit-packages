@@ -5,7 +5,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const main = async () => {
   for (const i of tqdm(range(170), { desc: "outer" })) {
-    // console.log(i);
+    console.log(i);
     await sleep(2000 * Math.random());
   }
 };

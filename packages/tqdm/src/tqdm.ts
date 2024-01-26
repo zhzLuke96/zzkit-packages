@@ -126,13 +126,10 @@ export class TqdmInstance {
 
   *[Symbol.iterator]() {
     const iterator = this.params.iterable[Symbol.iterator]();
-    for (const { value, done } of iterator) {
+    for (const value of iterator) {
       yield value;
-
       this.barUpdate();
-      if (done) {
-        this.onDone();
-      }
     }
+    this.onDone();
   }
 }
