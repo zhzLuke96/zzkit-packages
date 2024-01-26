@@ -1,3 +1,11 @@
+/**
+ * TODO:
+ *
+ * 1. 一些params用不到/还没实现 需要清理
+ * 2. 现在只实现了 desc total iterable disable
+ */
+
+//
 export type TqdmParams = {
   /**
    * Iterable to decorate with a progressbar. Leave blank to manually manage the updates.
