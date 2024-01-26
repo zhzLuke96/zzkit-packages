@@ -1,32 +1,20 @@
 import cliProgress from "cli-progress";
 import { TqdmParams } from "./types";
 import { range } from "./range";
-
-function* generator(
-  onNext: (value: any) => void,
-  isDone: () => boolean
-): Generator<any> {
-  let value: any;
-  while (!isDone()) {
-    value = yield value;
-    onNext(value);
-  }
-}
+import readline from "readline";
 
 export class TqdmInstance {
-  protected _generator: Generator<any>;
-  protected _iterator: Iterator<any>;
-
   protected isDone = false;
 
   protected _progressBar = new cliProgress.SingleBar({
-    // 类似 python tqdm 的format
+    // default like python tqdm-style
     // 76%|████████████████████████████         | 7568/10000 [00:33<00:10, 229.00it/s]
     format:
       "{desc}{percentage}%|{bar}|{value}/{total} [{x_duration_formatted}<{x_eta_formatted}, {iter_duration_formatted}]",
     barCompleteChar: "\u2588",
     barIncompleteChar: "\u2591",
-    hideCursor: true,
+    // TODO: configure this
+    // hideCursor: true,
   });
 
   protected barPayload = {
@@ -37,12 +25,9 @@ export class TqdmInstance {
   };
 
   constructor(readonly params: TqdmParams) {
-    this._generator = generator(this.onNext.bind(this), () => this.isDone);
-
     if (!params.iterable) {
       params.iterable = range(params.total ?? 100);
     }
-    this._iterator = params.iterable[Symbol.iterator]();
     if (!params.total) {
       params.total = params.total ?? params.iterable.length ?? 100;
     }
@@ -59,6 +44,30 @@ export class TqdmInstance {
     }
 
     this._progressBar.update(this.barPayload);
+
+    // TODO: hide cursor and show cursor
+    // process.on("exit", this.onProcessExit.bind(this));
+    // process.on("SIGINT", this.onProcessExit.bind(this, true));
+    // process.on("SIGUSR1", this.onProcessExit.bind(this, true));
+    // process.on("SIGUSR2", this.onProcessExit.bind(this, true));
+    // process.on("uncaughtException", this.onProcessExit.bind(this, true));
+  }
+
+  protected onProcessExit(self_exit = false) {
+    let rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.write("\u001B[?25h"); // show cursor
+
+    if (!this.isDone) {
+      this._progressBar.stop();
+      this.isDone = true;
+    }
+
+    if (self_exit) {
+      process.exit(1);
+    }
   }
 
   protected onDone() {
@@ -115,20 +124,15 @@ export class TqdmInstance {
     });
   }
 
-  protected onNext(next_value: any) {
-    const { value, done } = this._iterator.next(next_value);
-    this.barUpdate();
-
-    if (done) {
-      this.onDone();
-    }
-  }
-
-  next(value?: any) {
-    return this._generator.next(value);
-  }
-
   *[Symbol.iterator]() {
-    yield* this._generator;
+    const iterator = this.params.iterable[Symbol.iterator]();
+    for (const { value, done } of iterator) {
+      yield value;
+
+      this.barUpdate();
+      if (done) {
+        this.onDone();
+      }
+    }
   }
 }
