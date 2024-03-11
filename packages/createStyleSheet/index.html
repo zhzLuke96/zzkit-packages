@@ -20,6 +20,7 @@
     </div>
     <script id="code" type="module">
       import { createStyleSheet } from "./dist/main.module.mjs";
+      const css = String.raw;
       const sheet = createStyleSheet(
         {
           button: {
@@ -37,10 +38,12 @@
             },
           },
           pre: {
-            "background-color": "#1f1f1f",
-            padding: "10px",
-            color: "white",
-            "border-radius": "5px",
+            cssText: css`
+              background-color: #1f1f1f;
+              padding: 10px;
+              color: white;
+              border-radius: 5px;
+            `,
           },
         },
         { adopted: true }

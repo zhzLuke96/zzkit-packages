@@ -58,6 +58,10 @@ export function parseCSSProps(
 
     for (const prop in cssObject) {
       const propValue = cssObject[prop];
+      if (prop === "cssText") {
+        block.cssText += propValue;
+        continue;
+      }
       if (typeof propValue === "object") {
         const selector = prop;
         const childNodeSelector = processSelector(
@@ -76,9 +80,7 @@ export function parseCSSProps(
         if (propValue === null || propValue === undefined) {
           continue;
         }
-        block.cssText += `${hyphenate(prop)}: ${
-          cssObject[prop]
-        };${enter_symbol}`;
+        block.cssText += `${hyphenate(prop)}: ${propValue};${enter_symbol}`;
       }
     }
 
