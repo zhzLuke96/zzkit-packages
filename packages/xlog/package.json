@@ -1,6 +1,6 @@
 {
   "name": "@zzkit/xlog",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "",
   "source": "src/main.ts",
   "main": "dist/main.umd.js",
