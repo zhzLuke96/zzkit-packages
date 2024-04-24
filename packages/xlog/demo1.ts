@@ -65,6 +65,7 @@ const loggerInstance = new Logger({
   console.info("hello world");
   console.warn("hello world");
   console.error("hello world");
+  console.error(new Error("Hello Error!"));
   console.debug("hello world");
 
   console.log(

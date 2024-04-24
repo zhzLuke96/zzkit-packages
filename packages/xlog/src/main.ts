@@ -59,6 +59,22 @@ export interface TransportFormatter {
   (data: LogData): string;
 }
 
+// 特别处理 Error 类型，如果是 Error 类型，将其 message 和 stack 信息解析出来
+const stringify = (data: any, format = true) =>
+  JSON.stringify(
+    data,
+    (key, value) => {
+      if (value instanceof Error) {
+        return {
+          message: value.message,
+          stack: value.stack,
+        };
+      }
+      return value;
+    },
+    format ? 2 : undefined
+  );
+
 export class Logger {
   static readonly origConsole = { ...console } as typeof console;
   static defaultMessageFormatter(...args: any[]) {
@@ -67,7 +83,10 @@ export class Logger {
         if (typeof item === "string" || item instanceof String) {
           return item;
         }
-        return JSON.stringify(item);
+        if (item instanceof Error) {
+          return item.stack;
+        }
+        return stringify(item);
       })
       .join(" ");
   }
@@ -146,7 +165,7 @@ class FileTransport implements Transport {
   }
 
   protected flush(): void {
-    const formatter = this.config.formatter ?? ((data) => JSON.stringify(data));
+    const formatter = this.config.formatter ?? ((data) => stringify(data));
     this.appendLogToFile(this.buffer.map(formatter).join("\n"));
   }
 
@@ -176,8 +195,7 @@ class ConsoleTransport implements Transport {
     if (this.config?.filter && !this.config?.filter(data)) {
       return;
     }
-    const formatter =
-      this.config?.formatter ?? ((data) => JSON.stringify(data));
+    const formatter = this.config?.formatter ?? ((data) => stringify(data));
 
     Logger.origConsole.log(formatter(data));
   }
@@ -322,12 +340,11 @@ export const transport_formatters = {
     );
   },
   json: (data: LogData) =>
-    JSON.stringify({
+    stringify({
       ...data,
       stack: stackUsefulFilter(data),
     }),
-  json_no_stack: (data: LogData) =>
-    JSON.stringify({ ...data, stack: undefined }),
+  json_no_stack: (data: LogData) => stringify({ ...data, stack: undefined }),
 } as const;
 
 export const formatters = {
