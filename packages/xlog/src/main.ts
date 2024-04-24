@@ -305,8 +305,12 @@ const stackUsefulFilter = (data: LogData) =>
   data.stack.filter(
     (x) => !x.file.startsWith("node:") && !x.file.includes("node_modules")
   );
-const timeStr = (data: LogData) =>
-  new Date(data.timestamp).toISOString().replace(/[TZ]/g, " ").trim();
+const timeStr = (data: LogData) => {
+  const date = new Date(data.timestamp);
+  return `${date.getFullYear()}/${
+    date.getMonth() + 1
+  }/${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}.${date.getMilliseconds()}`;
+};
 
 export const transport_formatters = {
   line1_colorize: (data: LogData) => {
