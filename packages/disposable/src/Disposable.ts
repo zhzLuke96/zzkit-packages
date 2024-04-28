@@ -86,6 +86,41 @@ export function connectDisposable(
   );
 }
 
+export type DisposableLike =
+  | Function
+  | IDisposable
+  | {
+      removeAllListeners: Function;
+    }
+  | {
+      dispose: Function;
+    }
+  | {
+      destroy: Function;
+    }
+  | {
+      end: Function;
+    };
+
+export function connectAnyDisposable(
+  source: IDisposable,
+  target: DisposableLike
+) {
+  source[WHEN_DISPOSE_SYMBOL](() => {
+    const dispose =
+      typeof target === "function"
+        ? target
+        : [
+            DISPOSE_CALLBACKS_SYMBOL,
+            "removeAllListeners",
+            "dispose",
+            "destroy",
+            "end",
+          ].find((k) => target[k]);
+    return typeof dispose === "function" ? dispose?.() : null;
+  });
+}
+
 /**
  * Provides a mechanism for releasing resources.
  *
@@ -144,4 +179,7 @@ export class Disposable extends DisposableBase implements IDisposable {
    */
   connect = (target: IDisposable | Function): void =>
     connectDisposable(this, target);
+
+  connectAny = (target: DisposableLike): void =>
+    connectAnyDisposable(this, target);
 }
