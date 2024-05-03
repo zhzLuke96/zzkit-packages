@@ -3,7 +3,7 @@ import { TqdmParams } from "./types";
 import { range } from "./range";
 import readline from "readline";
 
-export class TqdmInstance {
+export class TqdmInstance<T = any> {
   protected isDone = false;
 
   protected _progressBar = new cliProgress.SingleBar({
@@ -127,7 +127,7 @@ export class TqdmInstance {
   *[Symbol.iterator]() {
     const iterator = this.params.iterable[Symbol.iterator]();
     for (const value of iterator) {
-      yield value;
+      yield value as T;
       this.barUpdate();
     }
     this.onDone();
