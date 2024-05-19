@@ -35,3 +35,15 @@ export const createStyleSheet = (
 
   return sheet;
 };
+
+createStyleSheet.id2sheet = BaseStyleSheet.id2sheet;
+createStyleSheet.cls2sheet = BaseStyleSheet.cls2sheet;
+createStyleSheet.unmount = (idOrClassName: string) => {
+  const sheet =
+    BaseStyleSheet.id2sheet.get(idOrClassName) ||
+    BaseStyleSheet.cls2sheet.get(idOrClassName);
+  if (sheet) {
+    sheet.unmount();
+  }
+  return sheet;
+};

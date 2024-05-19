@@ -2,10 +2,16 @@ import { parseCSSProps } from "./parseCSSProps";
 import { NestedCSSProperties } from "./types";
 
 export class BaseStyleSheet {
+  static id2sheet = new Map<string, BaseStyleSheet>();
+  static cls2sheet = new Map<string, BaseStyleSheet>();
+
   protected _id = Math.random().toString(36).slice(2);
   protected _props: NestedCSSProperties = {};
 
-  constructor(readonly root: ShadowRoot | Document = document) {}
+  constructor(readonly root: ShadowRoot | Document = document) {
+    BaseStyleSheet.id2sheet.set(this._id, this);
+    BaseStyleSheet.cls2sheet.set(this.className, this);
+  }
 
   get className() {
     return `ss-${this._id}`;
@@ -38,7 +44,8 @@ export class BaseStyleSheet {
   }
 
   unmount() {
-    throw new Error("Method not implemented.");
+    BaseStyleSheet.id2sheet.delete(this._id);
+    BaseStyleSheet.cls2sheet.delete(this.className);
   }
 }
 
@@ -61,6 +68,7 @@ export class AdoptedStyleSheet extends BaseStyleSheet {
     this.root.adoptedStyleSheets = this.root.adoptedStyleSheets.filter(
       (x) => x !== this._sheet
     );
+    super.unmount();
   }
 }
 
@@ -79,5 +87,6 @@ export class StyleSheet extends BaseStyleSheet {
 
   unmount() {
     this._style.remove();
+    super.unmount();
   }
 }

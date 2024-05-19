@@ -137,6 +137,7 @@ export namespace CreateDom {
       : props?.attachShadow
       ? el.attachShadow({ mode: props.attachShadow })
       : null;
+    delete props?.attachShadow;
 
     // class => className
     if (props?.class) {
@@ -160,7 +161,7 @@ export namespace CreateDom {
               .map(([key]) => key)
           : props.className?.split(" ") || [];
         for (let c of className) {
-          el.classList.add(c);
+          el.classList.add(c.trim());
         }
       } else if (prop === "style") {
         const style = props.style;
@@ -182,7 +183,6 @@ export namespace CreateDom {
       } else if (prop.startsWith("on")) {
         el.addEventListener(prop.slice(2).toLowerCase(), props[prop]);
       } else {
-        delete props?.attachShadow;
         const value = props[prop];
         if (typeof value === "boolean") {
           if (value) {
