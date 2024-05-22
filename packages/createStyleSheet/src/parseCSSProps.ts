@@ -41,7 +41,7 @@ export function parseCSSProps(
   { beautify = false, scopedSelector = "" }: ParseCSSPropsOptions
 ) {
   const enter_symbol = beautify ? "\n" : "";
-  const stack = [
+  const queue = [
     { nodeSelector: rootNodeSelector + scopedSelector, cssObject },
   ];
   const cssBlocks = [] as {
@@ -49,8 +49,8 @@ export function parseCSSProps(
     cssText: string;
   }[];
 
-  while (stack.length > 0) {
-    const { nodeSelector, cssObject } = stack.pop()!;
+  while (queue.length > 0) {
+    const { nodeSelector, cssObject } = queue.shift()!;
     const block = {
       selector: nodeSelector,
       cssText: "",
@@ -69,7 +69,7 @@ export function parseCSSProps(
           nodeSelector,
           scopedSelector
         );
-        stack.push({
+        queue.push({
           nodeSelector: childNodeSelector,
           cssObject: propValue as NestedCSSProperties,
         });
