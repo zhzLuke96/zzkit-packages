@@ -55,6 +55,7 @@ export class AdoptedStyleSheet extends BaseStyleSheet {
   update(props: NestedCSSProperties) {
     const css_text = this.parse(props);
     this._sheet.replaceSync(css_text);
+    this._props = props;
   }
 
   mount() {
@@ -78,6 +79,7 @@ export class StyleSheet extends BaseStyleSheet {
   update(props: NestedCSSProperties) {
     const css_text = this.parse(props);
     this._style.innerHTML = css_text;
+    this._props = props;
   }
 
   mount() {
