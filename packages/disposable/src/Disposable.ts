@@ -1,8 +1,11 @@
 import { IDisposable } from "./types";
 
-export const DISPOSE_CALLBACKS_SYMBOL = Symbol("DISPOSE_CALLBACKS");
-export const DISPOSE_CALLER_SYMBOL = Symbol("DISPOSE_CALLER");
-export const WHEN_DISPOSE_SYMBOL = Symbol("WHEN_DISPOSE");
+export const WHEN_DISPOSE_CALLBACK = Symbol("WHEN_DISPOSE_CALLBACK");
+export const WHEN_DISPOSE = Symbol("WHEN_DISPOSE");
+export const CALL_DISPOSE = Symbol("CALL_DISPOSE");
+
+export const SIGNAL = Symbol("SIGNAL");
+export const ABORT_CONTROLLER = Symbol("ABORT_CONTROLLER");
 
 /**
  * Provides a mechanism for releasing resources.
@@ -15,7 +18,7 @@ export const WHEN_DISPOSE_SYMBOL = Symbol("WHEN_DISPOSE");
  *   now = Date.now();
  *   constructor() {
  *     super();
- *     this[DisposableBase.WHEN_DISPOSE_SYMBOL](() => {
+ *     this[DisposableBase.WHEN_DISPOSE](() => {
  *       console.log("hello disposed...");
  *     });
  *   }
@@ -23,67 +26,50 @@ export const WHEN_DISPOSE_SYMBOL = Symbol("WHEN_DISPOSE");
  * ```
  */
 export class DisposableBase {
-  static DISPOSE_CALLBACKS_SYMBOL = DISPOSE_CALLBACKS_SYMBOL;
-  static DISPOSE_CALLER_SYMBOL = DISPOSE_CALLER_SYMBOL;
-  static WHEN_DISPOSE_SYMBOL = WHEN_DISPOSE_SYMBOL;
+  static WHEN_DISPOSE_CALLBACK = WHEN_DISPOSE_CALLBACK;
+  static WHEN_DISPOSE_SYMBOL = WHEN_DISPOSE;
+  static CALL_DISPOSE = CALL_DISPOSE;
 
-  [DISPOSE_CALLBACKS_SYMBOL] = [] as any[];
+  static SIGNAL = SIGNAL;
+  static ABORT_CONTROLLER = ABORT_CONTROLLER;
 
-  /**
-   * Dispose the object and return a promise.
-   *
-   * @return {Promise<PromiseSettledResult<any>[]>} A promise that resolves with an array of settled promise results.
-   */
-  [DISPOSE_CALLER_SYMBOL](): Promise<PromiseSettledResult<any>[]> {
-    // NOTE: this type is safe
-    return new Promise<PromiseSettledResult<any>[]>((resolve, reject) => {
-      Promise.allSettled(
-        this[DISPOSE_CALLBACKS_SYMBOL].map(async (callback) => callback())
-      )
-        .then(resolve)
-        .catch(reject);
-      this[DISPOSE_CALLBACKS_SYMBOL] = [];
-    });
+  [WHEN_DISPOSE_CALLBACK] = [] as (() => any)[];
+
+  [ABORT_CONTROLLER] = new AbortController();
+
+  get [SIGNAL]() {
+    return this[ABORT_CONTROLLER].signal;
+  }
+
+  async [CALL_DISPOSE]() {
+    this[SIGNAL].throwIfAborted();
+    this[ABORT_CONTROLLER].abort();
+
+    return Promise.allSettled(this[WHEN_DISPOSE_CALLBACK].map((cb) => cb()));
   }
 
   /**
-   * Executes a callback function when the object is disposed.
-   * If the options parameter is provided with the top property set to true,
-   * the callback will be added to the beginning of the list of dispose callbacks.
-   * Otherwise, it will be added to the end of the list.
-   *
-   * @param callback - The callback function to execute when the object is disposed.
-   * @param {{ top?: boolean }} [options] - The options for the dispose callback.
-   * @param {boolean} [options.top] - If true, the callback will be added to the beginning of the list of dispose callbacks.
-   * @return {void}
+   * Registers a callback to be executed when the object is disposed.
+   * @param callback - The function to be called when disposal occurs.
+   * @param options - Optional configuration for the callback registration.
+   * @param options.top - If true, the callback is added to the beginning of the callback list; otherwise, it is added to the end.
    */
-  [WHEN_DISPOSE_SYMBOL](
+  [WHEN_DISPOSE](
     callback: (...args: any[]) => any,
     options?: {
       top?: boolean;
     }
   ): void {
-    if (options?.top) {
-      this[DISPOSE_CALLBACKS_SYMBOL].unshift(callback);
+    if (this[SIGNAL].aborted) {
+      callback();
     } else {
-      this[DISPOSE_CALLBACKS_SYMBOL].push(callback);
+      if (options?.top) {
+        this[WHEN_DISPOSE_CALLBACK].unshift(callback);
+      } else {
+        this[WHEN_DISPOSE_CALLBACK].push(callback);
+      }
     }
   }
-}
-
-/**
- * connect two disposable objects.
- *
- * @param {IDisposable} source - source object
- * @param {IDisposable | Function} target - target object to connect to source (or callback function)
- */
-export function connectDisposable(
-  source: IDisposable,
-  target: IDisposable | Function
-) {
-  source[WHEN_DISPOSE_SYMBOL](() =>
-    typeof target === "function" ? target() : target[DISPOSE_CALLER_SYMBOL]()
-  );
 }
 
 export type DisposableLike =
@@ -106,12 +92,12 @@ export function connectAnyDisposable(
   source: IDisposable,
   target: DisposableLike
 ) {
-  source[WHEN_DISPOSE_SYMBOL](() => {
+  source[WHEN_DISPOSE](() => {
     const dispose =
       typeof target === "function"
         ? target
         : [
-            DISPOSE_CALLBACKS_SYMBOL,
+            CALL_DISPOSE,
             "removeAllListeners",
             "dispose",
             "destroy",
@@ -142,33 +128,27 @@ export function connectAnyDisposable(
  * ```
  */
 export class Disposable extends DisposableBase implements IDisposable {
-  [DISPOSE_CALLBACKS_SYMBOL] = [] as any[];
+  disposed = this[SIGNAL];
 
   /**
    * Dispose the object and return a promise.
    *
-   * @return {Promise<PromiseSettledResult<any>[]>} A promise that resolves with an array of settled promise results.
+   * @return {Promise<PromiseSettledResult<() => any>[]>} A promise that resolves with an array of settled promise results.
    */
-  dispose = (): Promise<PromiseSettledResult<any>[]> =>
-    this[DISPOSE_CALLER_SYMBOL]();
+  dispose = () => this[CALL_DISPOSE]();
 
   /**
-   * Executes a callback function when the object is disposed.
-   * If the options parameter is provided with the top property set to true,
-   * the callback will be added to the beginning of the list of dispose callbacks.
-   * Otherwise, it will be added to the end of the list.
-   *
-   * @param callback - The callback function to execute when the object is disposed.
-   * @param {{ top?: boolean }} [options] - The options for the dispose callback.
-   * @param {boolean} [options.top] - If true, the callback will be added to the beginning of the list of dispose callbacks.
-   * @return {void}
+   * Registers a callback to be executed when the object is disposed.
+   * @param callback - The function to be called when disposal occurs.
+   * @param options - Optional configuration for the callback registration.
+   * @param options.top - If true, the callback is added to the beginning of the callback list; otherwise, it is added to the end.
    */
-  whenDispose = (
+  onDisposed = (
     callback: (...args: any[]) => any,
     options?: {
       top?: boolean;
     }
-  ) => this[WHEN_DISPOSE_SYMBOL](callback, options);
+  ) => this[WHEN_DISPOSE](callback, options);
 
   /**
    * Connects the object to another disposable object.
@@ -178,8 +158,5 @@ export class Disposable extends DisposableBase implements IDisposable {
    * @return {void}
    */
   connect = (target: IDisposable | Function): void =>
-    connectDisposable(this, target);
-
-  connectAny = (target: DisposableLike): void =>
     connectAnyDisposable(this, target);
 }
