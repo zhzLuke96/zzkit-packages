@@ -42,8 +42,12 @@ export class DisposableBase {
   }
 
   async [CALL_DISPOSE]() {
-    this[SIGNAL].throwIfAborted();
-    this[ABORT_CONTROLLER].abort();
+    if (typeof this[SIGNAL]?.throwIfAborted === "function") {
+      this[SIGNAL].throwIfAborted();
+    }
+    if (typeof this[ABORT_CONTROLLER]?.abort === "function") {
+      this[ABORT_CONTROLLER].abort();
+    }
 
     return Promise.allSettled(this[WHEN_DISPOSE_CALLBACK].map((cb) => cb()));
   }
