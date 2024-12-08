@@ -80,8 +80,12 @@ export class TqdmInstance<T = any> {
   protected times: number[] = [];
   protected iter_index = 0;
 
-  protected barUpdate() {
-    this.iter_index += 1;
+  public update(index: number) {
+    this.iter_index = index;
+    this.flush();
+  }
+
+  public flush() {
     // 计算单次时间
     const time = Date.now();
     this.times.push(time);
@@ -128,7 +132,8 @@ export class TqdmInstance<T = any> {
     const iterator = this.params.iterable[Symbol.iterator]();
     for (const value of iterator) {
       yield value as T;
-      this.barUpdate();
+      this.iter_index += 1;
+      this.flush();
     }
     this.onDone();
   }
