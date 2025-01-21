@@ -341,12 +341,16 @@ export const transport_formatters = {
       "\n"
     );
   },
-  json: (data: LogData) =>
-    stringify({
-      ...data,
-      stack: stackUsefulFilter(data),
-    }),
-  json_no_stack: (data: LogData) => stringify({ ...data, stack: undefined }),
+  json: (data: LogData, format = false) =>
+    stringify(
+      {
+        ...data,
+        stack: stackUsefulFilter(data),
+      },
+      format
+    ),
+  json_no_stack: (data: LogData, format = false) =>
+    stringify({ ...data, stack: undefined }, format),
 } as const;
 
 export const formatters = {
