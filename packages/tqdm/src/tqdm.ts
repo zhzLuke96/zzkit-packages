@@ -4,6 +4,26 @@ import { range } from "./range";
 import readline from "readline";
 
 export class TqdmInstance<T = any> {
+  /**
+   * Formats a number of seconds as a clock time, [H:]MM:SS
+   * @param ms Number of milliseconds
+   * @returns Formatted clock time
+   */
+  static format_interval(ms: number) {
+    if (ms < 0) {
+      return "00:00";
+    }
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const pad = (x: number) =>
+      Number.isFinite(x) ? x.toString().padStart(2, "0") : "00";
+    if (h > 0) {
+      return `${pad(h)}:${pad(m % 60)}:${pad(s % 60)}`;
+    }
+    return `${pad(m % 60)}:${pad(s % 60)}`;
+  }
+
   protected isDone = false;
 
   protected _progressBar = new cliProgress.SingleBar({
@@ -24,12 +44,22 @@ export class TqdmInstance<T = any> {
     desc: "",
   };
 
-  constructor(readonly params: TqdmParams) {
+  readonly params: TqdmParams &
+    Required<Pick<TqdmParams, "total" | "iterable">>;
+
+  /**
+   * Creates a new instance of TqdmInstance with the given iterable and optional parameters.
+   *
+   * @param {TqdmParams} params - Optional parameters for the TqdmInstance.
+   */
+  constructor(params: TqdmParams) {
+    this.params = params as any;
+    const default_total = 100;
     if (!params.iterable) {
-      params.iterable = range(params.total ?? 100);
+      params.iterable = range(params.total ?? default_total);
     }
     if (!params.total) {
-      params.total = params.total ?? params.iterable.length ?? 100;
+      params.total = params.total ?? params.iterable.length ?? default_total;
     }
     if (params.desc) {
       this.barPayload.desc = `${params.desc} `;
@@ -37,7 +67,7 @@ export class TqdmInstance<T = any> {
 
     if (!params.disable) {
       this._progressBar.start(
-        params.total!,
+        params.total ?? default_total,
         params.initial ?? 0,
         this.barPayload
       );
@@ -71,7 +101,7 @@ export class TqdmInstance<T = any> {
   }
 
   protected onDone() {
-    this._progressBar.update(this.params.total!);
+    this._progressBar.update(this.params.total);
     this._progressBar.stop();
     this.isDone = true;
   }
@@ -80,9 +110,27 @@ export class TqdmInstance<T = any> {
   protected times: number[] = [];
   protected iter_index = 0;
 
-  public update(index: number) {
-    this.iter_index = index;
+  /**
+   * update to the next iter
+   */
+  public update(n: number) {
+    if (this.isDone) return;
+    this.iter_index = n;
     this.flush();
+  }
+
+  /**
+   * Resets to 0 iterations for repeated use.
+   */
+  public reset(total = -1) {
+    this.iter_index = 0;
+    this.startTime = Date.now();
+    this.times = [];
+    if (total > 0) {
+      this.params.total = total;
+    }
+    this._progressBar.setTotal(this.params.total);
+    this._progressBar.update(this.iter_index, this.barPayload);
   }
 
   public flush() {
@@ -92,28 +140,11 @@ export class TqdmInstance<T = any> {
     const duration = time - this.startTime;
     const iter_duration_ms = duration / this.times.length;
 
-    // ms 格式化为 hh:mm:ss
-    const msFormat = (ms: number) => {
-      if (ms < 0) {
-        return "00:00";
-      }
-      const s = Math.floor(ms / 1000);
-      const m = Math.floor(s / 60);
-      const h = Math.floor(m / 60);
-      // pad
-      const pad = (x: number) =>
-        Number.isFinite(x) ? x.toString().padStart(2, "0") : "00";
-      if (h > 0) {
-        return `${pad(h)}:${pad(m % 60)}:${pad(s % 60)}`;
-      }
-      return `${pad(m % 60)}:${pad(s % 60)}`;
-    };
-
     // 过了多久
-    const duration_formatted = msFormat(duration);
+    const duration_formatted = TqdmInstance.format_interval(duration);
     // 预计剩余时间
-    const eta = iter_duration_ms * (this.params.total! - this.iter_index);
-    const eta_formatted = msFormat(eta);
+    const eta = iter_duration_ms * (this.params.total - this.iter_index);
+    const eta_formatted = TqdmInstance.format_interval(eta);
     // 单次时间 it/s 或者 s/it 如果一个iter大于1s 则显示 it/s
     const iter_duration_formatted =
       iter_duration_ms < 1000

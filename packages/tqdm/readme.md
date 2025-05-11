@@ -1,4 +1,4 @@
-# @zzkit/tqdm 
+# @zzkit/tqdm
 
 A progress bar library for showing progress of loops and asynchronous tasks in the terminal.
 
@@ -24,6 +24,21 @@ This will display a progress bar in the terminal, indicating the progress of the
 
 ```
 Training 2%|█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|5/170 [00:03<01:40, 1.65it/s]
+```
+
+Without for loop
+
+```js
+import { TqdmInstance } from "@zzkit/tqdm";
+const bar1 = new TqdmInstance({ total: 1000, initial: 250 });
+// do sth...
+bar1.update(500); // update to 500
+// do sth...
+bar1.reset(100); // reset total to 100 and set n => 0
+// do sth...
+bar1.update(50);
+// finally...
+bar1.close();
 ```
 
 ## Options
